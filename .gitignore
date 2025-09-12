@@ -26,3 +26,6 @@ replay_pid*
 # Sensitive info
 *.pfx
 *.cer
+
+# IDE Related
+.idea
