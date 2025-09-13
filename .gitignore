@@ -26,6 +26,10 @@ replay_pid*
 # Sensitive info
 *.pfx
 *.cer
+*.env
 
 # IDE Related
-.idea
+/.idea/
+
+# Build files
+target

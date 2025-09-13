@@ -1,6 +1,6 @@
 package com.arthurwinck.assinador.resource;
 
-import com.arthurwinck.assinador.dto.HashPayload;
+import com.arthurwinck.assinador.dto.TextPayload;
 import com.arthurwinck.assinador.service.HashService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -19,9 +19,9 @@ public class HashResource {
     }
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
-    public String generateHash(@RequestBody HashPayload hashPayload) {
+    public String generateHash(@RequestBody TextPayload textPayload) {
         // Criar validações para payload
-        return this.hashService.generateHexEncodedHash(hashPayload.getText());
+        return this.hashService.generateHexEncodedHash(textPayload.getText());
     }
 
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
