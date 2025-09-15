@@ -1,8 +1,8 @@
 package com.arthurwinck.assinador.service;
 
 import com.arthurwinck.assinador.dto.SigningInfo;
+import org.bouncycastle.asn1.cms.CMSObjectIdentifiers;
 import org.bouncycastle.cert.X509CertificateHolder;
-import org.bouncycastle.cert.jcajce.JcaCertStoreBuilder;
 import org.bouncycastle.cms.*;
 import org.bouncycastle.cms.jcajce.JcaSignerInfoGeneratorBuilder;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
@@ -16,6 +16,7 @@ import org.bouncycastle.util.encoders.Base64;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyStore;
@@ -23,7 +24,9 @@ import java.security.PrivateKey;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Component
@@ -38,6 +41,8 @@ public class SigningService {
         signingInfo.setSigningAttached(true);
 
         CMSSignedData signedString = this.sign(string, signingInfo);
+
+        SigningService.saveAsP7M(signedString, SigningService.getNowDateTimeFilename());
 
         byte[] bytes = signedString.getEncoded();
         return Base64.toBase64String(bytes);
@@ -64,7 +69,11 @@ public class SigningService {
         cmsSignedDataGenerator.addSignerInfoGenerator(signerInfoGenerator);
         cmsSignedDataGenerator.addCertificates(jcaCertificateHolderStore);
 
-        CMSTypedData cmsData = new CMSProcessableByteArray(string.getBytes(StandardCharsets.UTF_8));
+        CMSTypedData cmsData = new CMSProcessableByteArray(
+                CMSObjectIdentifiers.data,
+                string.getBytes(StandardCharsets.UTF_8)
+        );
+
         return cmsSignedDataGenerator.generate(cmsData, signingInfo.isSigningAttached());
     }
 
@@ -83,6 +92,20 @@ public class SigningService {
         signingInfo.setCertificateHolderList(SigningService.getBCCertificateChain(keyStore.getCertificateChain(alias), signingInfo.getX509Certificate()));
 
         return signingInfo;
+    }
+
+    public static void saveAsP7M(CMSSignedData cmsSignedData, String filename) throws IOException {
+        byte[] encodedData = cmsSignedData.getEncoded();
+
+        // Salvando arquivo em formato .p7m (arquivo + assinatura)
+        try (FileOutputStream fos = new FileOutputStream(filename + ".p7m")) {
+            fos.write(encodedData);
+        }
+    }
+
+    public static String getNowDateTimeFilename() {
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
+        return formatter.format(new Date());
     }
 
     private static List<X509CertificateHolder> getBCCertificateChain(Certificate[] javaLikeCertificates, X509Certificate x509Certificate) throws CertificateEncodingException, IOException {
