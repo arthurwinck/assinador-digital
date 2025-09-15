@@ -29,7 +29,7 @@ import java.util.List;
 @Component
 public class SigningService {
 
-    private final static String SIGNATURE_ALGORITHM = "SHA512withRSA";
+    private final static String SIGNATURE_ALGORITHM = "SHA512WITHRSA";
     private final static String CERT_KEY_FILE_FORMAT = "PKCS12";
 
     // Documento ou conteúdo assinado deve estar anexado na estrutura da própria assinatura
@@ -47,7 +47,6 @@ public class SigningService {
     private CMSSignedData sign(String string, SigningInfo signingInfo) throws Exception {
         // Cria a estrutura que contém os certificados que serão utilizados
         Store<X509CertificateHolder> jcaCertificateHolderStore = new CollectionStore<>(signingInfo.getCertificateHolderList());
-        JcaCertStoreBuilder certStore = new JcaCertStoreBuilder().addCertificates(jcaCertificateHolderStore);
 
         // Engine de assinatura, usando SHA512withRSA
         ContentSigner contentSigner = new JcaContentSignerBuilder(SIGNATURE_ALGORITHM)

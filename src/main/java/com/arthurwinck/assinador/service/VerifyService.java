@@ -87,9 +87,9 @@ public class VerifyService {
         }
     }
 
-    public VerifyResponse verify(Resource signedFileResource) throws Exception {
+    public VerifyResponse verify(byte[] signedFileResource) throws Exception {
         // Aqui tá dando unknown object.... preciso dar um bizu
-        CMSSignedData cmsSignedData = new CMSSignedData(signedFileResource.getContentAsByteArray());
+        CMSSignedData cmsSignedData = new CMSSignedData(signedFileResource);
 
         VerifyResponse verifyResponse = new VerifyResponse();
 
