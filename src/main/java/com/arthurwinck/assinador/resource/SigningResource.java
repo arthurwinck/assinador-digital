@@ -4,6 +4,7 @@ import com.arthurwinck.assinador.dto.TextPayload;
 import com.arthurwinck.assinador.service.SigningService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -18,14 +19,17 @@ public class SigningResource {
         this.signingService = signingService;
     }
 
-    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
-    public String sign(@RequestBody TextPayload textPayload) throws Exception {
-        return this.signingService.signAttached(textPayload.getText());
-    }
-
+    // Passar o password diretamente é ruim...
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public String signUpload(@RequestParam MultipartFile file) throws Exception {
+    public ResponseEntity<String> signUpload(@RequestParam MultipartFile file,
+                                             @RequestParam MultipartFile pkcs12,
+                                             @RequestHeader("X-password") String password) throws Exception {
+        if (file.isEmpty() || pkcs12.isEmpty()) {
+            return ResponseEntity.badRequest().body("Arquivo a ser assinado ou arquivo pkcs12 não podem ser vazios.");
+        }
+
         String fileContent = new String(file.getBytes());
-        return this.signingService.signAttached(fileContent);
+
+        return ResponseEntity.ok(this.signingService.signAttached(fileContent, pkcs12.getResource(), password));
     }
 }
