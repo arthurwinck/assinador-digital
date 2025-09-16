@@ -1,0 +1,62 @@
+name: Build and Release JAR
+
+on:
+  push:
+    branches: [ main ]
+
+env:
+  JAVA_VERSION: '17'
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: 'temurin'
+        cache: maven
+        
+    - name: Generate version
+      id: version
+      run: |
+        SHORT_SHA=$(echo $GITHUB_SHA | cut -c1-8)
+        VERSION="v1.0.0-$SHORT_SHA"
+        echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+        
+    - name: Build JAR
+      run: mvn clean package -DskipTests
+        
+    - name: Get JAR file
+      id: jar
+      run: |
+        JAR_FILE=$(find target -name "*.jar" -not -name "*-sources.jar" | head -1)
+        JAR_NAME=$(basename "$JAR_FILE")
+        echo "JAR_FILE=$JAR_FILE" >> $GITHUB_OUTPUT
+        echo "JAR_NAME=$JAR_NAME" >> $GITHUB_OUTPUT
+        
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ steps.version.outputs.VERSION }}
+        name: Release ${{ steps.version.outputs.VERSION }}
+        files: ${{ steps.jar.outputs.JAR_FILE }}
+        body: |
+          ## Release ${{ steps.version.outputs.VERSION }}
+          
+          **Commit**: ${{ github.sha }}
+          **Date**: ${{ github.event.head_commit.timestamp }}
+          
+          ### 📦 Run the JAR
+          ```bash
+          java -jar ${{ steps.jar.outputs.JAR_NAME }}
+          ```
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
