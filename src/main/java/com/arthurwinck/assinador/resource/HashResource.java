@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
-@RequestMapping("/api/hash")
+@RequestMapping("/hash")
 public class HashResource {
 
     private final HashService hashService;
