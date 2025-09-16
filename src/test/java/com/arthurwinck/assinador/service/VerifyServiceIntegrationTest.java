@@ -27,6 +27,9 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 class VerifyServiceIntegrationTest {
 
+    @Value("${signing.test_certificate_name}")
+    private String testCertficateName;
+
     @Value("${signing.key-password}")
     private String keyPassword;
 
@@ -54,7 +57,7 @@ class VerifyServiceIntegrationTest {
     }
 
     private void loadTestCertificate() throws Exception {
-        ClassPathResource keystoreResource = new ClassPathResource("/keys/certificado_teste_hub.pfx");
+        ClassPathResource keystoreResource = new ClassPathResource("/keys/" + testCertficateName + ".pfx");
 
         if (!keystoreResource.exists()) {
             fail("Certificado não encontrado. Por favor adicione o certificado com nome de certificado_teste_hub.pfx em src/test/resources/keys com a senha dentro da variável de ambiente KEY_PASSWORD");

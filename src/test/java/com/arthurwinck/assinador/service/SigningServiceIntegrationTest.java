@@ -30,6 +30,9 @@ import java.util.List;
 @SpringBootTest
 class SigningServiceIntegrationTest {
 
+    @Value("${signing.test_certificate_name}")
+    private String testCertificateName;
+
     @Value("${signing.key-password}")
     private String keyPassword;
 
@@ -54,7 +57,7 @@ class SigningServiceIntegrationTest {
     }
 
     private void loadTestCertificate() throws Exception {
-        ClassPathResource keystoreResource = new ClassPathResource("/keys/certificado_teste_hub.pfx");
+        ClassPathResource keystoreResource = new ClassPathResource("/keys/" + testCertificateName + ".pfx");
 
         if (!keystoreResource.exists()) {
             fail("Certificado não encontrado. Por favor adicione o certificado com nome de certificado_teste_hub.pfx em src/test/resources/keys com a senha dentro da variável de ambiente KEY_PASSWORD");
