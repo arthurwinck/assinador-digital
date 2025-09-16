@@ -34,8 +34,7 @@ public class SigningService {
 
     public final static String SIGNATURE_FILE_EXTENSION = ".p7m";
     public final static String CERT_KEY_FILE_FORMAT = "PKCS12";
-
-    private final static String SIGNATURE_ALGORITHM = "SHA512WITHRSA";
+    public final static String SIGNATURE_ALGORITHM = "SHA512WITHRSA";
 
     // Documento ou conteúdo assinado deve estar anexado na estrutura da própria assinatura
     public String signAttached(String string, Resource pkcs12File, String password) throws Exception {
@@ -110,7 +109,7 @@ public class SigningService {
         return formatter.format(new Date()) + SIGNATURE_FILE_EXTENSION;
     }
 
-    private static List<X509CertificateHolder> getBCCertificateChain(Certificate[] javaLikeCertificates, X509Certificate x509Certificate) throws CertificateEncodingException, IOException {
+    public static List<X509CertificateHolder> getBCCertificateChain(Certificate[] javaLikeCertificates, X509Certificate x509Certificate) throws CertificateEncodingException, IOException {
         List<X509CertificateHolder> bcCertificateList = new ArrayList<>();
 
         // Caso exista uma cadeia de certificados, adicioná-los na lista de certificados
