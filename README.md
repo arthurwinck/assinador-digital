@@ -94,7 +94,7 @@ Como teste de controle, foi feita também a validação por meio do site CMS Val
 <img width="1370" height="616" alt="Screenshot From 2025-09-15 18-03-55" src="https://github.com/user-attachments/assets/1f2d8d70-0d5d-4272-aed2-66e179ed8cf0" />
 
 
-Distribuição de Código:
+# Distribuição de Código:
 
 Para conseguirmos executar os testes de integração que foram implementados anteriormente, tivemos que fazer algumas alterações para que os testes busquem o certificado por meio de um resource no classpath (estando disponível na pasta resources). Porém, não podemos commitar tais arquivos, e para isso, criamos secrets (ou variáveis de ambiente “escondidas”) para a codificação Base64 do arquivo do certificado, para o nome do certificado codificado e também para a senha da chave privada que o acompanha.
 
