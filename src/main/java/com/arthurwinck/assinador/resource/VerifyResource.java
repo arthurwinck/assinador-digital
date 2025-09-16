@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
-@RequestMapping("api/verify")
+@RequestMapping("/verify")
 public class VerifyResource {
 
     private final VerifyService verifyService;
@@ -20,7 +20,7 @@ public class VerifyResource {
     public VerifyResource(VerifyService verifyService)  { this.verifyService = verifyService; };
 
     @PostMapping
-    public ResponseEntity<VerifyResponse> verify(@RequestParam MultipartFile fileToVerify) throws Exception {
-        return ResponseEntity.ok(this.verifyService.verify(fileToVerify.getBytes()));
+    public ResponseEntity<VerifyResponse> verify(@RequestParam MultipartFile file) throws Exception {
+        return ResponseEntity.ok(this.verifyService.verify(file.getBytes()));
     }
 }

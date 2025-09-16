@@ -1,8 +1,8 @@
 package com.arthurwinck.assinador.service;
 
 import com.arthurwinck.assinador.dto.SigningInfo;
+import org.bouncycastle.asn1.cms.CMSObjectIdentifiers;
 import org.bouncycastle.cert.X509CertificateHolder;
-import org.bouncycastle.cert.jcajce.JcaCertStoreBuilder;
 import org.bouncycastle.cms.*;
 import org.bouncycastle.cms.jcajce.JcaSignerInfoGeneratorBuilder;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
@@ -16,6 +16,7 @@ import org.bouncycastle.util.encoders.Base64;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyStore;
@@ -23,14 +24,17 @@ import java.security.PrivateKey;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Component
 public class SigningService {
 
-    private final static String SIGNATURE_ALGORITHM = "SHA512WITHRSA";
-    private final static String CERT_KEY_FILE_FORMAT = "PKCS12";
+    public final static String SIGNATURE_FILE_EXTENSION = ".p7m";
+    public final static String CERT_KEY_FILE_FORMAT = "PKCS12";
+    public final static String SIGNATURE_ALGORITHM = "SHA512WITHRSA";
 
     // Documento ou conteúdo assinado deve estar anexado na estrutura da própria assinatura
     public String signAttached(String string, Resource pkcs12File, String password) throws Exception {
@@ -39,11 +43,13 @@ public class SigningService {
 
         CMSSignedData signedString = this.sign(string, signingInfo);
 
+        SigningService.saveAsP7M(signedString, SigningService.getNowDateTimeFilename());
+
         byte[] bytes = signedString.getEncoded();
         return Base64.toBase64String(bytes);
     }
 
-    private CMSSignedData sign(String string, SigningInfo signingInfo) throws Exception {
+    public CMSSignedData sign(String string, SigningInfo signingInfo) throws Exception {
         // Cria a estrutura que contém os certificados que serão utilizados
         Store<X509CertificateHolder> jcaCertificateHolderStore = new CollectionStore<>(signingInfo.getCertificateHolderList());
 
@@ -63,7 +69,11 @@ public class SigningService {
         cmsSignedDataGenerator.addSignerInfoGenerator(signerInfoGenerator);
         cmsSignedDataGenerator.addCertificates(jcaCertificateHolderStore);
 
-        CMSTypedData cmsData = new CMSProcessableByteArray(string.getBytes(StandardCharsets.UTF_8));
+        CMSTypedData cmsData = new CMSProcessableByteArray(
+                CMSObjectIdentifiers.data,
+                string.getBytes(StandardCharsets.UTF_8)
+        );
+
         return cmsSignedDataGenerator.generate(cmsData, signingInfo.isSigningAttached());
     }
 
@@ -84,7 +94,21 @@ public class SigningService {
         return signingInfo;
     }
 
-    private static List<X509CertificateHolder> getBCCertificateChain(Certificate[] javaLikeCertificates, X509Certificate x509Certificate) throws CertificateEncodingException, IOException {
+    public static void saveAsP7M(CMSSignedData cmsSignedData, String filename) throws IOException {
+        byte[] encodedData = cmsSignedData.getEncoded();
+
+        // Salvando arquivo em formato .p7m (arquivo + assinatura)
+        try (FileOutputStream fos = new FileOutputStream(filename)) {
+            fos.write(encodedData);
+        }
+    }
+
+    public static String getNowDateTimeFilename() {
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
+        return formatter.format(new Date()) + SIGNATURE_FILE_EXTENSION;
+    }
+
+    public static List<X509CertificateHolder> getBCCertificateChain(Certificate[] javaLikeCertificates, X509Certificate x509Certificate) throws CertificateEncodingException, IOException {
         List<X509CertificateHolder> bcCertificateList = new ArrayList<>();
 
         // Caso exista uma cadeia de certificados, adicioná-los na lista de certificados
