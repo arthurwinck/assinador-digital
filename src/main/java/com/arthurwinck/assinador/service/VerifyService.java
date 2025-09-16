@@ -7,6 +7,7 @@ import org.bouncycastle.asn1.cms.Attribute;
 import org.bouncycastle.asn1.cms.AttributeTable;
 import org.bouncycastle.asn1.cms.CMSAttributes;
 import org.bouncycastle.asn1.cms.Time;
+import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cms.*;
@@ -166,7 +167,16 @@ public class VerifyService {
                 }
 
             }
-            signerNames.append(signer.getSID().toString()).append(",");
+
+            SignerId signerId = signer.getSID();
+
+            Collection<X509CertificateHolder> matches = cmsSignedData.getCertificates().getMatches(signerId);
+
+            X509CertificateHolder certHolder = matches.iterator().next();
+            X500Name subject = certHolder.getSubject();
+            String subjectStr = subject.toString();
+
+            signerNames.append(subjectStr).append(",");
         }
 
         verifyResponse.setCNSignerName(signerNames.toString());

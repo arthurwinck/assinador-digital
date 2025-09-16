@@ -19,7 +19,7 @@ public class SigningResource {
         this.signingService = signingService;
     }
 
-    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<String> signUpload(@RequestParam MultipartFile file,
                                              @RequestParam MultipartFile pkcs12,
                                              @RequestHeader("X-password") String password) throws Exception {
