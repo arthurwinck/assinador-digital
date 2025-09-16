@@ -32,8 +32,10 @@ import java.util.List;
 @Component
 public class SigningService {
 
+    public final static String SIGNATURE_FILE_EXTENSION = ".p7m";
+    public final static String CERT_KEY_FILE_FORMAT = "PKCS12";
+
     private final static String SIGNATURE_ALGORITHM = "SHA512WITHRSA";
-    private final static String CERT_KEY_FILE_FORMAT = "PKCS12";
 
     // Documento ou conteúdo assinado deve estar anexado na estrutura da própria assinatura
     public String signAttached(String string, Resource pkcs12File, String password) throws Exception {
@@ -49,7 +51,7 @@ public class SigningService {
     }
 
     // TODO - Handle exceptions later
-    private CMSSignedData sign(String string, SigningInfo signingInfo) throws Exception {
+    public CMSSignedData sign(String string, SigningInfo signingInfo) throws Exception {
         // Cria a estrutura que contém os certificados que serão utilizados
         Store<X509CertificateHolder> jcaCertificateHolderStore = new CollectionStore<>(signingInfo.getCertificateHolderList());
 
@@ -98,14 +100,14 @@ public class SigningService {
         byte[] encodedData = cmsSignedData.getEncoded();
 
         // Salvando arquivo em formato .p7m (arquivo + assinatura)
-        try (FileOutputStream fos = new FileOutputStream(filename + ".p7m")) {
+        try (FileOutputStream fos = new FileOutputStream(filename)) {
             fos.write(encodedData);
         }
     }
 
     public static String getNowDateTimeFilename() {
         SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
-        return formatter.format(new Date());
+        return formatter.format(new Date()) + SIGNATURE_FILE_EXTENSION;
     }
 
     private static List<X509CertificateHolder> getBCCertificateChain(Certificate[] javaLikeCertificates, X509Certificate x509Certificate) throws CertificateEncodingException, IOException {
