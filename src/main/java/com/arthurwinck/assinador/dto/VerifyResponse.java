@@ -24,7 +24,7 @@ public class VerifyResponse {
     private String originalData;
     private VerifyResponseStatusEnum status;
     private String CNSignerName;
-    private Date signinTimeDate;
+    private String signinTimeDate;
     private String encapContentInfoHash;
     private String digestAlgorithm;
 }

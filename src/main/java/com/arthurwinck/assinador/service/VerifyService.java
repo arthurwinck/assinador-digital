@@ -1,6 +1,12 @@
 package com.arthurwinck.assinador.service;
 
 import com.arthurwinck.assinador.dto.VerifyResponse;
+import org.bouncycastle.asn1.ASN1Encodable;
+import org.bouncycastle.asn1.ASN1OctetString;
+import org.bouncycastle.asn1.cms.Attribute;
+import org.bouncycastle.asn1.cms.AttributeTable;
+import org.bouncycastle.asn1.cms.CMSAttributes;
+import org.bouncycastle.asn1.cms.Time;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cms.*;
@@ -13,10 +19,7 @@ import org.bouncycastle.util.encoders.Hex;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 @Component
 public class VerifyService {
@@ -72,7 +75,7 @@ public class VerifyService {
                     .build(signerCertificate);
             DigestCalculatorProvider digestProvider = new BcDigestCalculatorProvider();
 
-            // Create verifier with all 4 parameters
+            // Cria DTO com todas as infos relacionadas à assinatura
             SignerInformationVerifier verifier = new SignerInformationVerifier(
                     sigNameGenerator,
                     sigAlgorithmFinder,
@@ -88,7 +91,6 @@ public class VerifyService {
     }
 
     public VerifyResponse verify(byte[] signedFileResource) throws Exception {
-        // Aqui tá dando unknown object.... preciso dar um bizu
         CMSSignedData cmsSignedData = new CMSSignedData(signedFileResource);
 
         VerifyResponse verifyResponse = new VerifyResponse();
@@ -98,12 +100,13 @@ public class VerifyService {
                 String.join(", ", this.getDigestAlgorithmStringList(cmsSignedData.getDigestAlgorithmIDs())));
 
         CMSTypedData cmsSignedContent = cmsSignedData.getSignedContent();
-        byte[] originalSignedData = null;
+        byte[] originalSignedData;
 
         // Caso a assinatura verificada não seja do tipo attached
         if (null != cmsSignedContent) {
             originalSignedData = (byte[]) cmsSignedContent.getContent();
             verifyResponse.setOriginalData(Hex.toHexString(originalSignedData));
+            verifyResponse.setEncapContentInfoHash(cmsSignedContent.toString());
         }
 
         // Um documento pode ser assinado por múltiplos certificados, buscar todos os certificados e suas informações
@@ -112,19 +115,50 @@ public class VerifyService {
         SignerInformationStore signers = cmsSignedData.getSignerInfos();
         Collection<SignerInformation> signerCollection = signers.getSigners();
 
-        // Regra de negócio aqui, mas um documento nâo assinado é um documento inválido
+        // Regra de negócio aqui, um documento nâo assinado é um documento inválido
         if (signerCollection == null || signerCollection.isEmpty()) {
             verifyResponse.setStatus(VerifyResponse.VerifyResponseStatusEnum.INVALIDO);
 
             return verifyResponse;
         }
 
+        StringBuilder signerNames = new StringBuilder();
+        StringBuilder encapContentInfoHashes = new StringBuilder();
+        StringBuilder signingTimes = new StringBuilder();
+
         for (SignerInformation signer: signerCollection) {
             if (!this.verifySigner(signer, certStore)) {
                 verifyResponse.setStatus(VerifyResponse.VerifyResponseStatusEnum.INVALIDO);
-                break;
+                return verifyResponse;
             };
+
+            AttributeTable signedAttributes = signer.getSignedAttributes();
+            if (signedAttributes != null) {
+                Attribute messageDigestAttr = signedAttributes.get(CMSAttributes.messageDigest);
+                if (messageDigestAttr != null) {
+                    ASN1OctetString digest = (ASN1OctetString) messageDigestAttr
+                            .getAttrValues()
+                            .getObjectAt(0);
+
+                    byte[] hashBytes = digest.getOctets();
+                    encapContentInfoHashes.append(Hex.toHexString(hashBytes));
+                }
+
+                Attribute signingTimeAttr = signedAttributes.get(CMSAttributes.signingTime);
+                if (signingTimeAttr != null) {
+                    ASN1Encodable attrValue = signingTimeAttr.getAttrValues().getObjectAt(0);
+
+                    Time time = Time.getInstance(attrValue);
+                    signingTimes.append(time.getDate()) ;
+                }
+
+            }
+            signerNames.append(signer.getSID().toString()).append(",");
         }
+
+        verifyResponse.setCNSignerName(signerNames.toString());
+        verifyResponse.setEncapContentInfoHash(encapContentInfoHashes.toString());
+        verifyResponse.setSigninTimeDate(signingTimes.toString());
 
         return verifyResponse;
     }

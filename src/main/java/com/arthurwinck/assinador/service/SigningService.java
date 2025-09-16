@@ -43,7 +43,6 @@ public class SigningService {
         return Base64.toBase64String(bytes);
     }
 
-    // TODO - Handle exceptions later
     private CMSSignedData sign(String string, SigningInfo signingInfo) throws Exception {
         // Cria a estrutura que contém os certificados que serão utilizados
         Store<X509CertificateHolder> jcaCertificateHolderStore = new CollectionStore<>(signingInfo.getCertificateHolderList());
