@@ -4,7 +4,7 @@
 
 - Java 17 (17.0.16)
 - Maven 3.9.10
-- IntelliJ (Ou outra IDE, para esse passo a passo estaremos utilizando os runners pela IDE)
+- (Opcional) IntelliJ (Ou outra IDE, para esse passo a passo estaremos utilizando os runners pela IDE)
 
 Recomendo para a utilização de mais de uma versão java o SDKMan que permite que existam vários candidates para a versão atual do Java e do Maven, entre outras linguagens/gerenciadores semelhantes.
 
@@ -16,7 +16,7 @@ Builde e instale o projeto com:
 
 `mvn clean install -U`
 
-Crie um runner dentro de Run/Debug Configurations com as seguintes propriedades:
+Crie um runner dentro de Run/Debug Configurations com as seguintes propriedades (Caso não utilize alguma IDE, rode `mvn spring-boot:run` passando as variáveis necessárias(portas, variáveis de ambiente, e outros):
 
 <img width="805" height="393" alt="Screenshot From 2025-09-16 07-09-29" src="https://github.com/user-attachments/assets/4d2374c8-cf71-401e-b296-60aea763c931" />
 
