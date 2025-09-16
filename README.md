@@ -1,23 +1,24 @@
-Como Buildar o Projeto:
+<img width="1248" height="576" alt="Screenshot From 2025-09-16 09-24-03" src="https://github.com/user-attachments/assets/379b4987-2685-4b8e-8aff-9a70dcd6cbf1" /># Como Buildar o Projeto:
 
-Pré-requisitos:
+## Pré-requisitos:
 
-Java 17 (17.0.16)
-Maven 3.9.10
-IntelliJ (Ou outra IDE, para esse passo a passo estaremos utilizando os runners pela IDE)
+- Java 17 (17.0.16)
+- Maven 3.9.10
+- IntelliJ (Ou outra IDE, para esse passo a passo estaremos utilizando os runners pela IDE)
+
 Recomendo para a utilização de mais de uma versão java o SDKMan que permite que existam vários candidates para a versão atual do Java e do Maven, entre outras linguagens/gerenciadores semelhantes.
 
-Clone o repositório do projeto 
+### Clone o repositório do projeto 
 
-git clone https://github.com/arthurwinck/assinador-digital
+`git clone https://github.com/arthurwinck/assinador-digital`
 
 Builde e instale o projeto com:
 
-mvn clean install -U
+`mvn clean install -U`
 
 Crie um runner dentro de Run/Debug Configurations com as seguintes propriedades:
 
-
+<img width="805" height="393" alt="Screenshot From 2025-09-16 07-09-29" src="https://github.com/user-attachments/assets/4d2374c8-cf71-401e-b296-60aea763c931" />
 
 Inicialize o runner pelo Debug (ou Runner) com F5 para Debug e Ctrl + F5 pra Run
 
@@ -29,12 +30,13 @@ Senha presente na variável de ambiente KEY_PASSWORD para testes de integração
 
 Nome do certificado presente na variável de ambiente TEST_CERTIFICATE_NAME. Nome padrão do artefato é: “certificado_teste_hub”
 
+<img width="805" height="393" alt="Screenshot From 2025-09-16 09-07-19" src="https://github.com/user-attachments/assets/ddab1e30-3c12-4fe9-b74f-8af4405859d0" />
 
 
 Além disso, é necessário disponibilizar o arquivo .pfx no path src/test/resources/keys. Dessa forma é possível executar os dois testes de integração que utilizam o certificado e a chave privada.
 
 
-Desenvolvimento:
+# Desenvolvimento:
 
 A estrutura desenvolvida é a seguinte: Resources são os arquivos responsáveis por gerenciar as requisições e os Services os arquivos responsáveis pela lógica de negócio: realizar a assinatura/verificação de assinatura e devolvê-la para o usuário.
 
@@ -48,23 +50,25 @@ Testes unitários relacionados aos métodos auxiliares, e autenticação para us
 
 Por fim, outro ponto de melhoria do código é a implementação de mensagens de validação mais específicas. Erros de senha, ou de arquivos inutilizáveis retornam o mesmo erro de servidor e não indicam ao usuário exatamente qual foi o problema para que uma assinatura não tenha dado certo.
 
-Validação
+# Validação
 
 
-Assinatura
+## Assinatura
 
 CURL realizado para assinatura do arquivo doc.txt:
 
-curl -X POST http://localhost:8080/signature -F "file=@./src/main/resources/files/doc.txt" -F "pkcs12=@./src/main/resources/keys/certificado_teste_hub.pfx" -H "X-password: *********"
+`curl -X POST http://localhost:8080/signature -F "file=@./src/main/resources/files/doc.txt" -F "pkcs12=@./src/main/resources/keys/certificado_teste_hub.pfx" -H "X-password: *********"`
 
 O arquivo gerado é salvo com o timestamp do momento em que foi gerado.
 
 Para validar o resultado, também foi utilizado o ASN.1 JavaScript decoder. Nele podemos ver as informações sobre o certificado digital que foi utilizado para a assinatura do documento
 
+<img width="818" height="684" alt="Screenshot From 2025-09-16 06-52-06" src="https://github.com/user-attachments/assets/de85a350-96e6-426c-ace6-bb0c6ab137cb" />
 
 
 Exemplo de assinaturas geradas:
 
+<img width="185" height="181" alt="Screenshot From 2025-09-16 06-58-26" src="https://github.com/user-attachments/assets/490c328d-0762-44b0-b463-ac10d9f79043" />
 
 
 Testes de integração foram realizados para que fosse possível verificar que o fluxo de assinatura funciona corretamente com strings. 
@@ -73,52 +77,45 @@ Verificação
 
 CURL realizado utilizando o arquivo “20250915180255.p7m” que acabou de ser gerado pelo passo anterior:
 
-http://localhost:8080/verify -F "file=@./20250915180255.p7m"
+`http://localhost:8080/verify -F "file=@./20250915180255.p7m"`
 
 Resultado:
 
+<img width="1906" height="137" alt="Screenshot From 2025-09-15 18-17-46" src="https://github.com/user-attachments/assets/344c9db2-2793-4bb4-ae52-e9bc816380d9" />
 
 
 Alternativamente, em texto:
 
-{"originalData":"54657374652076616761206261636b2d656e64204a617661","status":"VALIDO","signinTimeDate":null,"encapContentInfoHash":null,"digestAlgorithm":"SHA512","cnsignerName":null}
+```{"originalData":"54657374652076616761206261636b2d656e64204a617661","status":"VALIDO","signinTimeDate":null,"encapContentInfoHash":null,"digestAlgorithm":"SHA512","cnsignerName":null}```
 
 Como teste de controle, foi feita também a validação por meio do site CMS Validator, tendo como resultado:
 
 
-
+<img width="1370" height="616" alt="Screenshot From 2025-09-15 18-03-55" src="https://github.com/user-attachments/assets/1f2d8d70-0d5d-4272-aed2-66e179ed8cf0" />
 
 
 Distribuição de Código:
 
 Para conseguirmos executar os testes de integração que foram implementados anteriormente, tivemos que fazer algumas alterações para que os testes busquem o certificado por meio de um resource no classpath (estando disponível na pasta resources). Porém, não podemos commitar tais arquivos, e para isso, criamos secrets (ou variáveis de ambiente “escondidas”) para a codificação Base64 do arquivo do certificado, para o nome do certificado codificado e também para a senha da chave privada que o acompanha.
 
+<img width="1357" height="413" alt="Screenshot From 2025-09-16 09-19-41" src="https://github.com/user-attachments/assets/9f37102e-4859-41b6-8a2e-9f66a85ac939" />
+
 Nessa situação, utilizamos os secrets de repositório, porém como melhoria, seria interessante criar as variáveis por ambiente, podendo ter variáveis específicas para ambientes de desenvolvimento e produção.
 
 Outro ponto é o disparo desses workflows a partir da criação de uma tag, pois atualmente qualquer commit na main dispara os dois fluxos.
 
-
-
-
 Com isso é possível ver o resultado dos testes na etapa “Run Tests” e “Build and Release JAR“ do workflow do repositório:
 
 
-
-
+<img width="1237" height="267" alt="Screenshot From 2025-09-16 09-21-56" src="https://github.com/user-attachments/assets/5e8b36eb-4eb6-4bbe-ab82-d55788031717" />
 
 Exemplo de execução dos testes dentro do workflow:
 
-
+<img width="1248" height="576" alt="Screenshot From 2025-09-16 09-24-03" src="https://github.com/user-attachments/assets/83eae2be-cb9e-40b1-992e-307b9e43fee6" />
 
 Disponibilização das releases .JAR criadas pelo workflow de releases:
 
-
-
-
-
-Todos os testes realizados estão disponíveis no repositório Github. Muito obrigado!
-
-
+<img width="1403" height="1050" alt="Screenshot From 2025-09-16 09-25-03" src="https://github.com/user-attachments/assets/e43bfa45-11e0-4bc4-9e33-7baf4ebc578a" />
 
 Referências:
 
