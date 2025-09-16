@@ -1,6 +1,6 @@
-<img width="1248" height="576" alt="Screenshot From 2025-09-16 09-24-03" src="https://github.com/user-attachments/assets/379b4987-2685-4b8e-8aff-9a70dcd6cbf1" /># Como Buildar o Projeto:
+# Assinador Digital:
 
-## Pré-requisitos:
+# Pré-requisitos e Build do Projeto:
 
 - Java 17 (17.0.16)
 - Maven 3.9.10
