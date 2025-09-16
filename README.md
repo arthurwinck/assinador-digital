@@ -65,7 +65,6 @@ Para validar o resultado, também foi utilizado o ASN.1 JavaScript decoder. Nele
 
 <img width="818" height="684" alt="Screenshot From 2025-09-16 06-52-06" src="https://github.com/user-attachments/assets/de85a350-96e6-426c-ace6-bb0c6ab137cb" />
 
-
 Exemplo de assinaturas geradas:
 
 <img width="185" height="181" alt="Screenshot From 2025-09-16 06-58-26" src="https://github.com/user-attachments/assets/490c328d-0762-44b0-b463-ac10d9f79043" />
@@ -75,18 +74,26 @@ Testes de integração foram realizados para que fosse possível verificar que o
 
 Verificação
 
-CURL realizado utilizando o arquivo “20250915180255.p7m” que acabou de ser gerado pelo passo anterior:
+CURL realizado utilizando o arquivo “20250916131959.p7m” que acabou de ser gerado pelo passo anterior:
 
-`http://localhost:8080/verify -F "file=@./20250915180255.p7m"`
+`http://localhost:8080/verify -F "file=@./20250916131959.p7m"`
 
 Resultado:
 
-<img width="1906" height="137" alt="Screenshot From 2025-09-15 18-17-46" src="https://github.com/user-attachments/assets/344c9db2-2793-4bb4-ae52-e9bc816380d9" />
-
+<img width="1306" height="187" alt="image" src="https://github.com/user-attachments/assets/2b8eb8c7-e528-461b-9d8b-7b88768354de" />
 
 Alternativamente, em texto:
 
-```{"originalData":"54657374652076616761206261636b2d656e64204a617661","status":"VALIDO","signinTimeDate":null,"encapContentInfoHash":null,"digestAlgorithm":"SHA512","cnsignerName":null}```
+```json
+{
+    "originalData": "54657374652076616761206261636b2d656e64204a617661",
+    "status": "VALIDO",
+    "signinTimeDate": "Tue Sep 16 13:19:59 GMT-03:00 2025",
+    "encapContentInfoHash": "dc1a7de77c59a29f366a4b154b03ad7d99013e36e08beb50d976358bea7b045884fe72111b27cf7d6302916b2691ac7696c1637e1ab44584d8d6613825149e35",
+    "digestAlgorithm": "SHA512",
+    "cnsignerName": "CN=HUB2 TESTES,OU=Validado por email,O=BRy Tecnologia,C=BR,ST=SC,L=Florianopolis,E=darlan@bry.com.br,"
+}
+```
 
 Como teste de controle, foi feita também a validação por meio do site CMS Validator, tendo como resultado:
 
