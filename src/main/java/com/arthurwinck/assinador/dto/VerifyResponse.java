@@ -22,6 +22,7 @@ public class VerifyResponse {
     }
 
     private String originalData;
+    private String error;
     private VerifyResponseStatusEnum status;
     private String CNSignerName;
     private String signinTimeDate;

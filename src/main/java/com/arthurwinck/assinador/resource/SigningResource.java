@@ -27,8 +27,13 @@ public class SigningResource {
             return ResponseEntity.badRequest().body("Arquivo a ser assinado ou arquivo pkcs12 não podem ser vazios.");
         }
 
-        String fileContent = new String(file.getBytes());
+        try {
+            String fileContent = new String(file.getBytes());
+            String result = this.signingService.signAttached(fileContent, pkcs12.getResource(), password);
+            return ResponseEntity.ok(result);
 
-        return ResponseEntity.ok(this.signingService.signAttached(fileContent, pkcs12.getResource(), password));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(e.getMessage());
+        }
     }
 }

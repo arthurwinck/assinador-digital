@@ -1,6 +1,9 @@
 package com.arthurwinck.assinador.service;
 
 import com.arthurwinck.assinador.dto.VerifyResponse;
+import com.arthurwinck.assinador.exception.InvalidSignatureFileException;
+import com.arthurwinck.assinador.exception.InvalidSignedContentException;
+import com.arthurwinck.assinador.exception.VerifyValidationException;
 import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1OctetString;
 import org.bouncycastle.asn1.cms.Attribute;
@@ -11,9 +14,11 @@ import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cms.*;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.operator.*;
 import org.bouncycastle.operator.bc.BcDigestCalculatorProvider;
 import org.bouncycastle.operator.jcajce.JcaContentVerifierProviderBuilder;
+import org.bouncycastle.util.Selector;
 import org.bouncycastle.util.Store;
 import org.bouncycastle.util.encoders.Base64;
 import org.bouncycastle.util.encoders.Hex;
@@ -73,7 +78,7 @@ public class VerifyService {
             CMSSignatureAlgorithmNameGenerator sigNameGenerator = new DefaultCMSSignatureAlgorithmNameGenerator();
             SignatureAlgorithmIdentifierFinder sigAlgorithmFinder = new DefaultSignatureAlgorithmIdentifierFinder();
             ContentVerifierProvider verifierProvider = new JcaContentVerifierProviderBuilder()
-                    .setProvider("BC")
+                    .setProvider(BouncyCastleProvider.PROVIDER_NAME)
                     .build(signerCertificate);
             DigestCalculatorProvider digestProvider = new BcDigestCalculatorProvider();
 
@@ -92,16 +97,15 @@ public class VerifyService {
         }
     }
 
-    private static String getHexEncodedSignedContent(CMSTypedData cmsTypedData) throws Exception {
+    private static String getHexEncodedSignedContent(CMSTypedData cmsTypedData) throws InvalidSignedContentException {
         if (cmsTypedData == null) {
-            throw new Exception("Conteúdo não encontrado - Espera-se a assinatura e o conteúdo assinado presente no arquivo");
+            throw new InvalidSignedContentException("Conteúdo não encontrado - Espera-se a assinatura e o conteúdo assinado presente no arquivo");
         }
-
         byte[] originalSignedData = (byte[]) cmsTypedData.getContent();
         return Hex.toHexString(originalSignedData);
     }
 
-    public VerifyResponse verify(byte[] signedFileResource) throws Exception {
+    private static CMSSignedData getSignedData(byte[] signedFileResource) throws InvalidSignatureFileException {
         CMSSignedData cmsSignedData;
 
         try {
@@ -113,10 +117,28 @@ public class VerifyService {
                 byte[] decodedData = Base64.decode(signedFileResource);
                 cmsSignedData = new CMSSignedData(decodedData);
             } catch (Exception e2) {
-                throw new Exception("Nâo foi possível realizar o parsing desse arquivo: " + e.getMessage());
+                throw new InvalidSignatureFileException("Não foi possível carregar arquivo de assinatura.", e);
+            }
+        }
+        return cmsSignedData;
+    }
+
+    public static Collection<X509CertificateHolder> getCertificateMatches(CMSSignedData cmsSignedData, Selector<X509CertificateHolder> signerId) throws IllegalStateException {
+        Collection<?> rawMatches = cmsSignedData.getCertificates().getMatches(signerId);
+        Collection<X509CertificateHolder> matches = new ArrayList<>();
+
+        for (Object obj : rawMatches) {
+            if (obj instanceof X509CertificateHolder holder) {
+                matches.add(holder);
+            } else {
+                throw new IllegalStateException("Tipo de objeto para certificado inesperado: " + obj.getClass());
             }
         }
 
+        return matches;
+    }
+
+    public VerifyResponse verifySignature(CMSSignedData cmsSignedData) throws InvalidSignedContentException, IllegalStateException {
         VerifyResponse verifyResponse = new VerifyResponse();
 
         verifyResponse.setStatus(VerifyResponse.VerifyResponseStatusEnum.VALIDO);
@@ -144,7 +166,7 @@ public class VerifyService {
             if (!this.verifySigner(signer, certStore)) {
                 verifyResponse.setStatus(VerifyResponse.VerifyResponseStatusEnum.INVALIDO);
                 return verifyResponse;
-            };
+            }
 
             AttributeTable signedAttributes = signer.getSignedAttributes();
             if (signedAttributes != null) {
@@ -170,7 +192,7 @@ public class VerifyService {
 
             SignerId signerId = signer.getSID();
 
-            Collection<X509CertificateHolder> matches = cmsSignedData.getCertificates().getMatches(signerId);
+            Collection<X509CertificateHolder> matches = VerifyService.getCertificateMatches(cmsSignedData, signerId);
 
             X509CertificateHolder certHolder = matches.iterator().next();
             X500Name subject = certHolder.getSubject();
@@ -184,5 +206,15 @@ public class VerifyService {
         verifyResponse.setSigninTimeDate(signingTimes.toString());
 
         return verifyResponse;
+    }
+
+    public VerifyResponse verify(byte[] signedFileResource) throws VerifyValidationException {
+
+        try {
+            CMSSignedData cmsSignedData = VerifyService.getSignedData(signedFileResource);
+            return this.verifySignature(cmsSignedData);
+        } catch (VerifyValidationException e) {
+            throw VerifyValidationException.from(e);
+        }
     }
 }

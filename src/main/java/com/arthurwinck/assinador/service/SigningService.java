@@ -1,6 +1,8 @@
 package com.arthurwinck.assinador.service;
 
 import com.arthurwinck.assinador.dto.SigningInfo;
+import com.arthurwinck.assinador.exception.InvalidCertificateException;
+import com.arthurwinck.assinador.exception.SigningValidationException;
 import org.bouncycastle.asn1.cms.CMSObjectIdentifiers;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cms.*;
@@ -8,6 +10,7 @@ import org.bouncycastle.cms.jcajce.JcaSignerInfoGeneratorBuilder;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.DigestCalculatorProvider;
+import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.bouncycastle.operator.jcajce.JcaDigestCalculatorProviderBuilder;
 import org.bouncycastle.util.CollectionStore;
@@ -19,10 +22,10 @@ import org.springframework.stereotype.Component;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.security.KeyStore;
-import java.security.PrivateKey;
+import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
+import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -37,19 +40,23 @@ public class SigningService {
     public final static String SIGNATURE_ALGORITHM = "SHA512WITHRSA";
 
     // Documento ou conteúdo assinado deve estar anexado na estrutura da própria assinatura
-    public String signAttached(String string, Resource pkcs12File, String password) throws Exception {
-        SigningInfo signingInfo = SigningService.getSigningInfo(pkcs12File, password);
-        signingInfo.setSigningAttached(true);
+    public String signAttached(String string, Resource pkcs12File, String password) throws SigningValidationException {
+        try {
+            SigningInfo signingInfo = SigningService.getSigningInfo(pkcs12File, password);
+            signingInfo.setSigningAttached(true);
 
-        CMSSignedData signedString = this.sign(string, signingInfo);
+            CMSSignedData signedString = this.sign(string, signingInfo);
 
-        SigningService.saveAsP7M(signedString, SigningService.getNowDateTimeFilename());
+            SigningService.saveAsP7M(signedString, SigningService.getNowDateTimeFilename());
 
-        byte[] bytes = signedString.getEncoded();
-        return Base64.toBase64String(bytes);
+            byte[] bytes = signedString.getEncoded();
+            return Base64.toBase64String(bytes);
+        } catch (Exception e) {
+            throw SigningValidationException.from(e);
+        }
     }
 
-    public CMSSignedData sign(String string, SigningInfo signingInfo) throws Exception {
+    public CMSSignedData sign(String string, SigningInfo signingInfo) throws CMSException, OperatorCreationException, CertificateEncodingException {
         // Cria a estrutura que contém os certificados que serão utilizados
         Store<X509CertificateHolder> jcaCertificateHolderStore = new CollectionStore<>(signingInfo.getCertificateHolderList());
 
@@ -77,7 +84,7 @@ public class SigningService {
         return cmsSignedDataGenerator.generate(cmsData, signingInfo.isSigningAttached());
     }
 
-    private static SigningInfo getSigningInfo(Resource pkcs12File, String password) throws Exception {
+    private static SigningInfo getSigningInfo(Resource pkcs12File, String password) throws KeyStoreException, IOException, CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, InvalidCertificateException {
         KeyStore keyStore = KeyStore.getInstance(CERT_KEY_FILE_FORMAT);
         keyStore.load(pkcs12File.getInputStream(), password.toCharArray());
 
@@ -85,7 +92,13 @@ public class SigningService {
 
         SigningInfo signingInfo = new SigningInfo();
 
-        signingInfo.setPrivateKey((PrivateKey) keyStore.getKey(alias, password.toCharArray()));
+        PrivateKey privateKey = (PrivateKey) keyStore.getKey(alias, password.toCharArray());
+
+        if (privateKey == null) {
+            throw new InvalidCertificateException("No private key found for alias: " + alias);
+        }
+
+        signingInfo.setPrivateKey(privateKey);
         signingInfo.setX509Certificate((X509Certificate) keyStore.getCertificate(alias));
 
         // Gera cadeia de certificados a partir do que existe dentro da chave
