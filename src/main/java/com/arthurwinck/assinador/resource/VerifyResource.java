@@ -21,6 +21,12 @@ public class VerifyResource {
 
     @PostMapping
     public ResponseEntity<VerifyResponse> verify(@RequestParam MultipartFile file) throws Exception {
-        return ResponseEntity.ok(this.verifyService.verify(file.getBytes()));
+        try {
+            return ResponseEntity.ok(this.verifyService.verify(file.getBytes()));
+        } catch (Exception e) {
+            VerifyResponse response = new VerifyResponse();
+            response.setError(e.getMessage());
+            return ResponseEntity.internalServerError().body(response);
+        }
     }
 }
