@@ -1,9 +1,19 @@
 package com.arthurwinck.assinador.exception;
 
 import lombok.Getter;
+import org.springframework.http.HttpStatus;
+
 import java.util.Map;
 
+@Getter
 public class VerifyValidationException extends Exception {
+    protected HttpStatus httpStatus;
+
+    public VerifyValidationException(HttpStatus httpStatus, String message, Throwable cause) {
+        super(message, cause);
+        this.httpStatus = httpStatus;
+    }
+
     public VerifyValidationException(String message, Throwable cause) {
         super(message, cause);
     }
@@ -14,14 +24,16 @@ public class VerifyValidationException extends Exception {
 
     @Getter
     public enum ErrorType {
-        GENERIC_EXCEPTION("Houve um erro ao tentar verificar o arquivo, tente novamente"),
-        INVALID_CONTENT_EXCEPTION("Não foi possível carregar o conteúdo do arquivo de assinatura"),
-        INVALID_FILE_EXCEPTION("Não foi possível carregar o arquivo de assinatura a ser verificado");
+        GENERIC_EXCEPTION("Houve um erro ao tentar verificar o arquivo, tente novamente", HttpStatus.INTERNAL_SERVER_ERROR),
+        INVALID_CONTENT_EXCEPTION("Não foi possível carregar o conteúdo do arquivo de assinatura", HttpStatus.BAD_REQUEST),
+        INVALID_FILE_EXCEPTION("Não foi possível carregar o arquivo de assinatura a ser verificado", HttpStatus.BAD_REQUEST);
 
         private final String message;
+        private final HttpStatus status;
 
-        ErrorType(String message) {
+        ErrorType(String message, HttpStatus status) {
             this.message = message;
+            this.status = status;
         }
 
     }
@@ -39,6 +51,6 @@ public class VerifyValidationException extends Exception {
             type = VerifyValidationException.ErrorType.GENERIC_EXCEPTION;
         }
 
-        return new VerifyValidationException(type.getMessage() + ": " + cause.getMessage(), cause);
+        return new VerifyValidationException(type.getStatus(), type.getMessage(), cause);
     }
 }

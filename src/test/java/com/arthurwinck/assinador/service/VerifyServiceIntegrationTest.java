@@ -2,6 +2,8 @@ package com.arthurwinck.assinador.service;
 
 import com.arthurwinck.assinador.dto.SigningInfo;
 import com.arthurwinck.assinador.dto.VerifyResponse;
+import com.arthurwinck.assinador.exception.InvalidSignatureFileException;
+import com.arthurwinck.assinador.exception.VerifyValidationException;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cms.CMSSignedData;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
@@ -13,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.http.HttpStatus;
 
 import java.io.InputStream;
 import java.security.KeyStore;
@@ -120,13 +123,13 @@ class VerifyServiceIntegrationTest {
     void testVerifyInvalidSignature() {
         byte[] corruptedData = "dados-corrompidos-que-não-são-cms".getBytes();
 
-        Exception exception = assertThrows(Exception.class, () -> {
+        VerifyValidationException exception = assertThrows(VerifyValidationException.class, () -> {
             verifyService.verify(corruptedData);
         });
 
         assertNotNull(exception.getMessage(), "Mensagem de erro deve estar presente");
-        assertTrue(exception.getMessage().contains("parsing"),
-                "Mensagem deve indicar erro de parsing");
+        assertEquals(HttpStatus.BAD_REQUEST, exception.getHttpStatus());
+        assertEquals(VerifyValidationException.ErrorType.INVALID_FILE_EXCEPTION.getMessage(), exception.getMessage());
     }
 
     @Test
