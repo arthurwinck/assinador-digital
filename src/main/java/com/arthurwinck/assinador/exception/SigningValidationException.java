@@ -70,6 +70,6 @@ public class SigningValidationException extends Exception {
             type = ErrorType.GENERIC_EXCEPTION;
         }
 
-        return new SigningValidationException(type.getStatus(), type.getMessage() + ": " + cause.getMessage(), cause);
+        return new SigningValidationException(type.getStatus(), type.getMessage(), cause);
     }
 }

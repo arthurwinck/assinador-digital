@@ -51,6 +51,6 @@ public class VerifyValidationException extends Exception {
             type = VerifyValidationException.ErrorType.GENERIC_EXCEPTION;
         }
 
-        return new VerifyValidationException(type.getStatus(), type.getMessage() + ": " + cause.getMessage(), cause);
+        return new VerifyValidationException(type.getStatus(), type.getMessage(), cause);
     }
 }
