@@ -1,12 +1,18 @@
 package com.arthurwinck.assinador.resource;
 
-import com.arthurwinck.assinador.dto.TextPayload;
+import com.arthurwinck.assinador.exception.SigningValidationException;
+import com.arthurwinck.assinador.exception.VerifyValidationException;
 import com.arthurwinck.assinador.service.SigningService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+
+import static com.arthurwinck.assinador.exception.SigningValidationException.ErrorType.CERTIFICATE_EXCEPTION;
 
 @RestController
 @RequestMapping("/signature")
@@ -22,7 +28,7 @@ public class SigningResource {
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<String> signUpload(@RequestParam MultipartFile file,
                                              @RequestParam MultipartFile pkcs12,
-                                             @RequestHeader("X-password") String password) throws Exception {
+                                             @RequestHeader("X-password") String password) {
         if (file.isEmpty() || pkcs12.isEmpty()) {
             return ResponseEntity.badRequest().body("Arquivo a ser assinado ou arquivo pkcs12 não podem ser vazios.");
         }
@@ -31,9 +37,15 @@ public class SigningResource {
             String fileContent = new String(file.getBytes());
             String result = this.signingService.signAttached(fileContent, pkcs12.getResource(), password);
             return ResponseEntity.ok(result);
+        } catch (SigningValidationException | IOException e) {
 
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body(e.getMessage());
+            String errorMessage = (e instanceof SigningValidationException) ? e.getMessage() : CERTIFICATE_EXCEPTION.getMessage();
+
+            HttpStatus status = (e instanceof SigningValidationException)
+                    ? ((SigningValidationException) e).getHttpStatus()
+                    : HttpStatus.BAD_REQUEST;
+
+            return ResponseEntity.status(status).body(errorMessage);
         }
     }
 }
