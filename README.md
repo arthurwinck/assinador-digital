@@ -124,7 +124,40 @@ Disponibilização das releases .JAR criadas pelo workflow de releases:
 
 <img width="1403" height="1050" alt="Screenshot From 2025-09-16 09-25-03" src="https://github.com/user-attachments/assets/e43bfa45-11e0-4bc4-9e33-7baf4ebc578a" />
 
-Referências:
+# Tratamento de erros e exceções
+
+Exceções customizadas foram criadas para mapear situações específicas de erros. A seguir temos as definições de cada exceção. A exceção retornada ao Resource será sempre uma SigningValidationException ou uma VerifyValidationException para o serviço de assinatura e o serviço de verificação, respectivamente. Erros não mapeados serão transformados em GenericException. Qualquer erro não mapeado retorna um status de 500, erro de servidor.s
+
+### SigningValidationException
+Exceção base disparada sempre que o serviço encontra um erro ao tentar realizar uma assinatura.
+
+### InvalidCertificateException (400 - Bad Request)
+Disparada sempre que não seja possível recuperar a chave privada a partir do arquivo enviado.
+
+### CMSException (Nativa BC) (500 - Server Error)
+Exceção nativa da biblioteca que ocorre quando não é possível adicionar certificados ao gerador de assinatura.
+
+### OperatorCreationException (Nativa BC) (500 - Server Error)
+Disparada quando não é possível instanciar estruturas necessárias para realizar assinatura
+CertificateException (Nativa BC) (400 -  Bad Request)
+Disparada em uma variedade de erros relacionados ao certificado.
+
+### KeyStoreException (Nativa Java Security) (500 - Server Error)
+Disparada quando keyStore não foi inicializado corretamente (erro ao tentar instanciar keystore a partir do arquivo enviado).
+
+### UnrecoverableKeyException (Nativa Java Security) (400 - Bad Request)
+Disparada quando a senha do keyStore está incorreta
+
+### VerifyValidationException
+Exceção base disparada quando o serviço de verificação de assinaturas encontra um erro. 
+
+### InvalidSignedContentException (400 - Bad Request)
+Disparada quando conteúdo assinado não está presente no arquivo. Assinatura do tipo “detached” não funcionará pois o conteúdo original precisa estar anexado ao arquivo.
+
+### InvalidSignatureFileException (400 - Bad Request)
+Disparada quando não é possível instanciar o objeto de assinatura com conteúdo anexado a partir do arquivo de entrada ou quando algum dos certificados não se encontra na estrutura necessária.
+
+# Referências:
 
 https://stackoverflow.com/questions/27917846/explore-a-bouncy-castle-store-object
 https://javadoc.io/doc/org.bouncycastle/bcpkix-jdk15to18/latest/index.html
