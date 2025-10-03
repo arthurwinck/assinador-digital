@@ -123,7 +123,7 @@ public class VerifyService {
         return cmsSignedData;
     }
 
-    public static Collection<X509CertificateHolder> getCertificateMatches(CMSSignedData cmsSignedData, Selector<X509CertificateHolder> signerId) throws IllegalStateException {
+    public static Collection<X509CertificateHolder> getCertificateMatches(CMSSignedData cmsSignedData, Selector<X509CertificateHolder> signerId) throws InvalidSignatureFileException {
         Collection<?> rawMatches = cmsSignedData.getCertificates().getMatches(signerId);
         Collection<X509CertificateHolder> matches = new ArrayList<>();
 
@@ -131,14 +131,14 @@ public class VerifyService {
             if (obj instanceof X509CertificateHolder holder) {
                 matches.add(holder);
             } else {
-                throw new IllegalStateException("Tipo de objeto para certificado inesperado: " + obj.getClass());
+                throw new InvalidSignatureFileException("Tipo de objeto para certificado inesperado: " + obj.getClass());
             }
         }
 
         return matches;
     }
 
-    public VerifyResponse verifySignature(CMSSignedData cmsSignedData) throws InvalidSignedContentException, IllegalStateException {
+    public VerifyResponse verifySignature(CMSSignedData cmsSignedData) throws InvalidSignedContentException, InvalidSignatureFileException {
         VerifyResponse verifyResponse = new VerifyResponse();
 
         verifyResponse.setStatus(VerifyResponse.VerifyResponseStatusEnum.VALIDO);

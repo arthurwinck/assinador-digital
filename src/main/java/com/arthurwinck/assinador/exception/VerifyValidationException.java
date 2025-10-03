@@ -40,8 +40,7 @@ public class VerifyValidationException extends Exception {
 
     private static final Map<Class<? extends Exception>, VerifyValidationException.ErrorType> ERROR_MAP = Map.of(
             InvalidSignedContentException.class, ErrorType.INVALID_CONTENT_EXCEPTION,
-            InvalidSignatureFileException.class, ErrorType.INVALID_FILE_EXCEPTION,
-            IllegalArgumentException.class, ErrorType.GENERIC_EXCEPTION
+            InvalidSignatureFileException.class, ErrorType.INVALID_FILE_EXCEPTION
     );
 
     public static VerifyValidationException from(Throwable cause) {
